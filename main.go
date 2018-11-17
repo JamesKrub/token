@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jakkrabig/captcha"
+	"github.com/robbert229/jwt"
 )
 
 type apiHandler struct{}
@@ -26,8 +28,18 @@ func (tokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rs := captcha.Validate(subStr[0], subStr[1])
 
 	if rs == false {
-		fmt.Fprintf(w, "401 UNAUTHORIZED")
+		w.WriteHeader(401)
+		fmt.Fprint(w)
 	}
+
+	algorithm := jwt.HmacSha256("ri74krrIyXaQ1KAcZRhTUHak656iqTzQ")
+	claims := jwt.NewClaim()
+	claims.SetTime("exp", time.Now().Add(time.Minute*5))
+	token, err := algorithm.Encode(claims)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, token)
 }
 
 func main() {
